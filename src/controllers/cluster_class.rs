@@ -1,6 +1,6 @@
 use crate::api::capi_clusterclass::ClusterClass;
 
-use crate::api::fleet_addon_config::{ClusterClassConfig, FleetAddonConfig};
+use crate::api::fleet_addon_config::{ClusterClassConfig, ClusterConfig, FleetAddonConfig};
 use crate::api::fleet_clustergroup::ClusterGroup;
 
 use kube::api::PatchParams;
@@ -21,7 +21,7 @@ pub struct FleetClusterClassBundle {
 
 impl FleetBundle for FleetClusterClassBundle {
     #[allow(refining_impl_trait)]
-    async fn sync(&mut self, ctx: Arc<Context>) -> GroupSyncResult<Action> {
+    async fn sync(&mut self, ctx: Arc<Context>, _: Option<&ClusterConfig>) -> GroupSyncResult<Action> {
         if self.config.cluster_class_patch_enabled() {
             patch(
                 ctx,

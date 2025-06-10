@@ -199,6 +199,26 @@ It is a required field and provides a config for fleet addon functionality.
                 tolerationSeconds: 600
         ```
 
+    -   `cluster.annotationFilters`
+        -   **Description:** A list of Cluster annotation filters.
+        -   **Type:** `array` of `string`
+        -   **Optional:** Yes
+
+        A list of Cluster annotation filters. Use filters to omit annotation propagation from CAPI Cluster to Fleet Cluster.  
+        
+        **If the list is not set, all annotation keys containing `k8s.io/` and `kubernetes.io/` will be omitted by default.**
+
+        **Example:**
+
+        ```yaml
+        spec:
+          cluster:
+            annotationFilters:
+              - "k8s.io/"
+              - "kubernetes.io/"
+              - "my.custom.annotation/"
+        ```
+
     -   `cluster.applyClassGroup`
         -   **Description:** Apply a ClusterGroup for a ClusterClass referenced from a different namespace.
         -   **Type:** `boolean`

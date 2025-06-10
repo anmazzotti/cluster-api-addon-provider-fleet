@@ -144,6 +144,13 @@ pub struct ClusterConfig {
     #[serde(flatten)]
     pub selectors: Selectors,
 
+    /// A list of Cluster annotation filters. Use filters to omit annotation propagation 
+    /// from CAPI Cluster to Fleet Cluster.  
+    /// If the list is not set, all annotation keys containing `k8s.io/` and `kubernetes.io/` 
+    /// will be omitted by default.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotation_filters: Option<Vec<String>>,
+
     #[cfg(feature = "agent-initiated")]
     /// Prepare initial cluster for agent initiated connection
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -250,6 +257,16 @@ impl ClusterConfig {
     pub(crate) fn apply_class_group(&self) -> bool {
         self.apply_class_group.is_some_and(|enabled| enabled)
     }
+
+    pub(crate) fn filter_annotation(&self, key: &str) -> bool {
+        let filters = self.annotation_filters.clone().unwrap_or_default();
+        for filter in filters.iter() {
+            if key.contains(filter) {
+                return false
+            }
+        }
+        true
+    }
 }
 
 /// `NamingStrategy` is controlling Fleet cluster naming
@@ -275,6 +292,7 @@ impl Default for ClusterConfig {
             patch_resource: Some(true),
             agent_env_vars: None,
             agent_tolerations: None,
+            annotation_filters: Some(vec![String::from("k8s.io/"), String::from("kubernetes.io/")]),
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::api::comparable::ResourceDiff;
-use crate::api::fleet_addon_config::FleetAddonConfig;
+use crate::api::fleet_addon_config::{FleetAddonConfig, ClusterConfig};
 use crate::controllers::PatchError;
 use crate::metrics::Diagnostics;
 use crate::multi_dispatcher::{BroadcastStream, MultiDispatcher, typed_gvk};
@@ -181,7 +181,7 @@ pub(crate) async fn fetch_config(client: Client) -> ConfigFetchResult<FleetAddon
 }
 
 pub(crate) trait FleetBundle {
-    async fn sync(&mut self, ctx: Arc<Context>) -> Result<Action, impl Into<SyncError>>;
+    async fn sync(&mut self, ctx: Arc<Context>, config: Option<&ClusterConfig>) -> Result<Action, impl Into<SyncError>>;
     #[allow(clippy::unused_async)]
     async fn cleanup(&mut self, _ctx: Arc<Context>) -> Result<Action, SyncError> {
         Ok(Action::await_change())
@@ -211,7 +211,7 @@ where
             match event {
                 finalizer::Event::Apply(c) => match c.to_bundle(ctx.clone()).await? {
                     Some(mut bundle) => bundle
-                        .sync(ctx)
+                        .sync(ctx, None)
                         .await
                         .map_err(Into::into)
                         .map_err(Into::into),

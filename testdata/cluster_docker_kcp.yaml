@@ -11,6 +11,11 @@ kind: Cluster
 metadata:
   annotations:
     example.com/annotation: test
+    kubectl.kubernetes.io/last-applied-configuration: ""
+    foo.kubernetes.io/bar: "foobar"
+    kubernetes.io/foo: "bar"
+    foo.k8s.io/bar: "foobar"
+    k8s.io/foo: "bar"
   labels:
     import: ""
     cni: kindnet

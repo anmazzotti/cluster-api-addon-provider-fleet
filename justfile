@@ -136,6 +136,13 @@ deploy-child-cluster-class:
     kind delete cluster --name capi-quickstart || true
     kubectl --context kind-dev apply -f testdata/capi-quickstart.yaml
 
+# Validate test annotations
+validate-test-annotations:
+    # Expect "example.com/annotation: test" propagation
+    kubectl --context kind-dev get clusters.fleet.cattle.io docker-demo -o yaml | grep "example.com/annotation: test"
+    # Expect default annotation omission
+    kubectl --context kind-dev get clusters.fleet.cattle.io docker-demo -o yaml | grep -vqz -e k8s.io -e kubernetes.io
+
 # Add and update helm repos used
 update-helm-repos:
     helm repo add fleet https://rancher.github.io/fleet-helm-charts/
@@ -168,13 +175,13 @@ release-manifests: _create-out-dir _download-kustomize
     kustomize build config/default > {{OUT_DIR}}/addon-components.yaml
 
 # Full e2e test of importing cluster in fleet
-test-import: start-dev deploy deploy-child-cluster deploy-kindnet deploy-app && collect-test-import
+test-import: start-dev deploy deploy-child-cluster deploy-kindnet deploy-app && validate-test-annotations collect-test-import
     kubectl wait pods --for=condition=Ready --timeout=150s --all --all-namespaces
     kubectl wait cluster --timeout=500s --for=condition=ControlPlaneReady=true docker-demo
     kubectl wait clusters.fleet.cattle.io --timeout=500s --for=condition=Ready=true docker-demo
 
 # Full e2e test of importing cluster in fleet
-test-import-rke2: start-dev deploy deploy-child-rke2-cluster deploy-calico-gitrepo deploy-app
+test-import-rke2: start-dev deploy deploy-child-rke2-cluster deploy-calico-gitrepo deploy-app && validate-test-annotations
     kubectl wait pods --for=condition=Ready --timeout=150s --all --all-namespaces
     kubectl wait cluster --timeout=500s --for=condition=ControlPlaneReady=true docker-demo
     kubectl wait clusters.fleet.cattle.io --timeout=500s --for=condition=Ready=true docker-demo

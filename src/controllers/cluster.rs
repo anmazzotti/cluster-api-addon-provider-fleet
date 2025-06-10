@@ -1,7 +1,7 @@
 use crate::api::bundle_namespace_mapping::BundleNamespaceMapping;
 use crate::api::capi_cluster::Cluster;
 
-use crate::api::fleet_addon_config::FleetAddonConfig;
+use crate::api::fleet_addon_config::{ClusterConfig, FleetAddonConfig};
 use crate::api::fleet_cluster::{self};
 
 #[cfg(feature = "agent-initiated")]
@@ -58,13 +58,17 @@ impl TemplateSources {
         TemplateSources(cluster.clone())
     }
 
-    async fn resolve(&self, client: Client) -> Option<Value> {
+    async fn resolve(&self, client: Client, config: &ClusterConfig) -> Option<Value> {
         // We need to remove all dynamic or unnessesary values from these resources
         let mut cluster = self.0.clone();
 
         cluster.status = None;
         cluster.meta_mut().managed_fields = None;
         cluster.meta_mut().resource_version = None;
+        cluster.metadata.annotations = Some(cluster.annotations().clone()
+            .into_iter()
+            .filter(|(key, _)| config.filter_annotation(key.as_ref()))
+            .collect());
 
         let reference = self.0.spec.proxy.control_plane_ref.as_ref()?;
         let api_version = reference.api_version.as_ref()?;
@@ -120,10 +124,12 @@ impl TemplateSources {
 
 impl FleetBundle for FleetClusterBundle {
     #[allow(refining_impl_trait)]
-    async fn sync(&mut self, ctx: Arc<Context>) -> ClusterSyncResult<Action> {
+    async fn sync(&mut self, ctx: Arc<Context>, config: Option<&ClusterConfig>) -> ClusterSyncResult<Action> {
+        let empty = ClusterConfig::default();
+        let config = config.unwrap_or(&empty);
         let cluster = &mut self.fleet;
 
-        if let Some(template) = self.template_sources.resolve(ctx.client.clone()).await {
+        if let Some(template) = self.template_sources.resolve(ctx.client.clone(), config).await {
             let template = serde_json::from_value(template)?;
             cluster.spec.template_values = Some(template);
         }
