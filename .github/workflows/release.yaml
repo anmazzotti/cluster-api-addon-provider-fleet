@@ -7,7 +7,7 @@ on:
 
 env:
   TAG: ${{ github.ref_name }}
-  IMAGE_NAME: cluster-api-addon-provider-fleet
+  IMAGE: cluster-api-addon-provider-fleet
   REPOSITORY_OWNER: ${{ github.repository_owner }}
   REGISTRY: ghcr.io
 
@@ -34,9 +34,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Push image to ghcr.io
-        uses: rancher/ecm-distro-tools/actions/publish-image@067de5ae5517b661b4d2f10e22cc5a21aa0ac915
+        uses: rancher/ecm-distro-tools/actions/publish-image@da9f5b6e258c327660eeab3db97952b612f1cf9f # v0.69.3
         with:
-          image: ${{ env.IMAGE_NAME }}
+          image: ${{ env.IMAGE }}
           tag: ${{ env.TAG }}-${{ matrix.tag-suffix }}
           platforms: ${{ matrix.platform }}
           push-to-public: true
